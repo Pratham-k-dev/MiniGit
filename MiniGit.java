@@ -32,6 +32,13 @@ public class MiniGit {
         else if (command.equals("log")) {
         log();
         }
+        else if (command.equals("checkout")) {
+            if (args.length < 2) {
+                System.out.println("Provide commit id");
+                return;
+            }
+            checkout(args[1]);
+        }
         else {
             System.out.println("Unknown command");
         }
@@ -194,5 +201,60 @@ public class MiniGit {
             sb.append(String.format("%02x", b));
         }
         return sb.toString();
+    }
+    public static void checkout(String commitId) {
+    try {
+        Path commitPath = Paths.get(".minigit/commits/" + commitId);
+
+        if (!Files.exists(commitPath)) {
+            System.out.println("Commit not found");
+            return;
+        }
+
+        List<String> lines = Files.readAllLines(commitPath);
+
+        boolean filesSection = false;
+
+        for (String line : lines) {
+
+            if (line.equals("files:")) {
+                filesSection = true;
+                continue;
+            }
+
+            if (filesSection) {
+                if (line.trim().isEmpty()) continue;
+
+                String[] parts = line.split(" ");
+
+                if (parts.length < 2) continue;
+
+                String fileName = parts[0];
+                String hash = parts[1];
+
+                Path objectPath = Paths.get(".minigit/objects/" + hash);
+
+                if (!Files.exists(objectPath)) {
+                    System.out.println("Missing object for " + fileName);
+                    continue;
+                }
+
+                String content = Files.readString(objectPath);
+
+                // overwrite file in working directory
+                Files.writeString(Paths.get(fileName), content);
+
+                System.out.println("Restored " + fileName);
+            }
+        }
+
+        // update HEAD
+        Files.writeString(Paths.get(".minigit/HEAD"), commitId);
+
+        System.out.println("Checkout complete: " + commitId);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
     }
 }
