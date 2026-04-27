@@ -4,7 +4,7 @@ import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.*;
 
-public class MiniGit {
+public class test {
 
     public static void main(String[] args) {
         GitService service = new GitService();
